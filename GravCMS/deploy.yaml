@@ -1,0 +1,56 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gravcms-deployment
+  labels:
+    app: gravcms
+spec:
+  #replicas: 3
+  selector:
+    matchLabels:
+      app: gravcms
+  template:
+    metadata:
+      labels:
+        app: gravcms
+    spec:
+      containers:
+      - name: gravcms
+        image: getgrav/grav:latest
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+        env:
+        - name: PHP_UPLOAD_MAX_FILESIZE
+          value: "20M"
+        - name: PHP_POST_MAX_SIZE
+          value: "20M"
+        volumeMounts:
+        - name: grav-storage
+          mountPath: /var/www/html
+
+    volumes:
+      - name: grav-storage
+        persistentVolumeClaim:
+          claimName: grav-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gravcms-svc
+spec:
+  selector:
+    app: gravcms
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: LoadBalancer
